@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthPass — Digital Health Card for Migrant Workers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-brand" onclick="return false">
+      <div class="nav-logo">➕</div>
+      <span class="nav-brand-name">Health<span>Pass</span></span>
+    </a>
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-create-nav" onclick="showPage('create')" data-i18n="nav.create">🪪 Create Card</button>
+      <button class="nav-tab" id="tab-scan-nav" onclick="showPage('scanner')" data-i18n="nav.scan">📷 Scan QR</button>
+    </div>
+    <div class="nav-controls">
+      <div class="offline-badge" id="offlineBadge">
+        <span class="offline-dot"></span>
+        <span id="offlineText">Offline Ready</span>
+      </div>
+      <select class="lang-select" id="langSelect" onchange="setLang(this.value)">
+        <option value="en">🇬🇧 EN</option>
+        <option value="hi">🇮🇳 HI</option>
+      </select>
+      <button class="icon-btn" id="darkToggle" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
+    </div>
+  </div>
+</nav>
+
+<div class="alert-banner hidden" id="alertBanner">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  <span id="alertText">⚠️ Critical information missing — Blood Group or Emergency Contact not provided.</span>
+</div>
+
+<div id="page-create" class="page">
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-tag">🏥 <span data-i18n="hero.tag">Hackathon 2025 · HealthTech</span></div>
+        <h1 class="hero-h" data-i18n-html="hero.h">Your health records,<br><em>always with you.</em></h1>
+        <p class="hero-p" data-i18n="hero.p">A portable digital health card for migrant workers — carry your critical medical data anywhere, share it via QR code, access it even offline.</p>
+        <div class="hero-btns">
+          <button class="btn btn-white btn-lg" onclick="scrollToForm()" data-i18n="hero.cta1">📝 Create My Health Card</button>
+          <button class="btn btn-ghost btn-lg" onclick="showPage('scanner')" data-i18n="hero.cta2">📷 Scan Emergency QR</button>
+        </div>
+      </div>
+      <div class="hero-preview">
+        <div class="mini-card">
+          <div class="mc-top">
+            <div class="mc-logo">Health<span>Pass</span></div>
+            <div class="mc-id">HP-2025-DEMO</div>
+          </div>
+          <div class="mc-avatar" id="heroAvatar">RK</div>
+          <div class="mc-name" id="heroName">Ramesh Kumar</div>
+          <div class="mc-role">Construction Worker · Delhi NCR</div>
+          <div class="mc-chips">
+            <div class="mc-chip em">🩸 B+</div>
+            <div class="mc-chip">💊 Diabetic</div>
+            <div class="mc-chip">⚠️ Penicillin</div>
+          </div>
+          <div class="mc-qr-area">
+            <div class="mc-qr-placeholder">⬛</div>
+            <div class="mc-scan-info">
+              <div class="mc-scan-label">Scan for full record</div>
+              <div class="mc-scan-text">Emergency responders can scan to access complete medical history</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content" id="formSection">
+    <div class="section-header">
+      <div>
+        <div class="section-tag" data-i18n="form.section-tag">HEALTH CARD BUILDER</div>
+        <h2 class="section-h" data-i18n="form.section-h">Fill in your medical details</h2>
+        <p class="section-p" data-i18n="form.section-p">Your information is stored locally on your device. Nothing is sent to any server.</p>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="clearAll()" data-i18n="form.clear">🗑️ Clear All</button>
+    </div>
+
+    <div class="form-card">
+      <div class="form-tabs-bar">
+        <button class="form-tab-btn active" id="ftab-personal" onclick="switchFormTab('personal')" data-i18n="ftab.personal"><span class="form-tab-icon">👤</span> Personal</button>
+        <button class="form-tab-btn" id="ftab-medical" onclick="switchFormTab('medical')" data-i18n="ftab.medical"><span class="form-tab-icon">🏥</span> Medical</button>
+        <button class="form-tab-btn" id="ftab-vaccines" onclick="switchFormTab('vaccines')" data-i18n="ftab.vaccines"><span class="form-tab-icon">💉</span> Vaccines</button>
+        <button class="form-tab-btn" id="ftab-emergency" onclick="switchFormTab('emergency')" data-i18n="ftab.emergency"><span class="form-tab-icon">🚨</span> Emergency</button>
+      </div>
+
+      <div class="form-panel active" id="fpanel-personal">
+        <div class="form-section-title"><span class="icon">👤</span> <span data-i18n="personal.title">Personal Information</span></div>
+        <div class="form-grid form-grid-2">
+          <div class="form-group">
+            <label class="form-label" data-i18n="personal.name">Full Name <span class="req">*</span></label>
+            <input class="form-input" id="f-name" type="text" placeholder="e.g. Ramesh Kumar" oninput="onFormChange()">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="personal.age">Age <span class="req">*</span></label>
+            <input class="form-input" id="f-age" type="number" min="1" max="120" placeholder="e.g. 32" oninput="onFormChange()">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="personal.gender">Gender</label>
+            <select class="form-select" id="f-gender" onchange="onFormChange()">
+              <option value="">Select gender</option>
+              <option value="Male">Male / पुरुष</option>
+              <option value="Female">Female / महिला</option>
+              <option value="Other">Other / अन्य</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="personal.mobile">Mobile Number <span class="req">*</span></label>
+            <input class="form-input" id="f-mobile" type="tel" placeholder="e.g. 9876543210" oninput="onFormChange()">
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <label class="form-label" data-i18n="personal.occupation">Occupation / Work Location</label>
+            <input class="form-input" id="f-occupation" type="text" placeholder="e.g. Construction Worker, Mumbai" oninput="onFormChange()">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-panel" id="fpanel-medical">
+        <div class="form-section-title"><span class="icon">🏥</span> <span data-i18n="medical.title">Medical Information</span></div>
+        <div class="form-grid form-grid-2">
+          <div class="form-group">
+            <label class="form-label" data-i18n="medical.blood">Blood Group <span class="req">*</span></label>
+            <select class="form-select" id="f-blood" onchange="onFormChange()">
+              <option value="">Select blood group</option>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="medical.height">Height / Weight</label>
+            <input class="form-input" id="f-height" type="text" placeholder="e.g. 5'8&quot; / 70kg" oninput="onFormChange()">
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <label class="form-label" data-i18n="medical.allergies">Known Allergies</label>
+            <textarea class="form-textarea" id="f-allergies" placeholder="e.g. Penicillin, Dust, Peanuts — or 'None known'" oninput="onFormChange()"></textarea>
+            <span class="form-hint" data-i18n="medical.allergies-hint">List all substances you are allergic to. This is critical for emergency treatment.</span>
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <label class="form-label" data-i18n="medical.chronic">Chronic Conditions</label>
+            <textarea class="form-textarea" id="f-chronic" placeholder="e.g. Type 2 Diabetes, Hypertension, Asthma" oninput="onFormChange()"></textarea>
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <label class="form-label" data-i18n="medical.meds">Current Medications</label>
+            <textarea class="form-textarea" id="f-meds" placeholder="e.g. Metformin 500mg (twice daily), Amlodipine 5mg" oninput="onFormChange()"></textarea>
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <label class="form-label" data-i18n="medical.surgeries">Past Surgeries / Hospitalizations</label>
+            <textarea class="form-textarea" id="f-surgeries" placeholder="e.g. Appendectomy (2019), Knee surgery (2021)" oninput="onFormChange()" style="min-height:70px"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-panel" id="fpanel-vaccines">
+        <div class="form-section-title"><span class="icon">💉</span> <span data-i18n="vax.title">Vaccination Record</span></div>
+        <div class="vaccine-grid" id="vaccineGrid"></div>
+        <div class="divider" style="margin:24px 0 20px"></div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="vax.other">Other Vaccinations</label>
+          <textarea class="form-textarea" id="f-vax-other" placeholder="List any other vaccines received with approximate dates..." oninput="onFormChange()" style="min-height:70px"></textarea>
+        </div>
+      </div>
+
+      <div class="form-panel" id="fpanel-emergency">
+        <div class="form-section-title"><span class="icon">🚨</span> <span data-i18n="em.title">Emergency Contact</span></div>
+        <div class="form-grid form-grid-2">
+          <div class="form-group">
+            <label class="form-label" data-i18n="em.name">Contact Name <span class="req">*</span></label>
+            <input class="form-input" id="f-em-name" type="text" placeholder="e.g. Sunita Kumar" oninput="onFormChange()">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="em.phone">Contact Number <span class="req">*</span></label>
+            <input class="form-input" id="f-em-phone" type="tel" placeholder="e.g. 9876543210" oninput="onFormChange()">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="em.relation">Relationship</label>
+            <select class="form-select" id="f-em-relation" onchange="onFormChange()">
+              <option value="">Select relation</option>
+              <option>Spouse / पत्नी/पति</option>
+              <option>Parent / माता-पिता</option>
+              <option>Sibling / भाई-बहन</option>
+              <option>Child / बच्चा</option>
+              <option>Friend / मित्र</option>
+              <option>Other / अन्य</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="em.alt-phone">Alternate Contact</label>
+            <input class="form-input" id="f-em-alt" type="tel" placeholder="Backup number" oninput="onFormChange()">
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <label class="form-label" data-i18n="em.doctor">Treating Doctor / Clinic</label>
+            <input class="form-input" id="f-doctor" type="text" placeholder="e.g. Dr. Sharma, Ram Clinic, Delhi" oninput="onFormChange()">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-nav">
+        <div class="tab-progress" id="tabProgress"></div>
+        <div class="flex gap-8">
+          <button class="btn btn-outline btn-sm" id="btnPrev" onclick="prevFormTab()" style="display:none" data-i18n="form.prev">← Back</button>
+          <button class="btn btn-primary btn-sm" id="btnNext" onclick="nextFormTab()" data-i18n="form.next">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="generate-area" id="generateArea">
+      <h3 data-i18n="gen.h">Ready to generate your Health Card?</h3>
+      <p data-i18n="gen.p">Your QR code will contain your complete encrypted health profile for emergency scanning.</p>
+      <button class="btn btn-primary btn-lg" onclick="generateCard()" data-i18n="gen.btn">⚡ Generate Digital Health Card</button>
+    </div>
+
+    <div class="card-output-section hidden" id="cardOutput">
+      <div class="section-header">
+        <div>
+          <div class="section-tag" data-i18n="card.tag">YOUR DIGITAL HEALTH CARD</div>
+          <h2 class="section-h" data-i18n="card.h">Scan the QR in any emergency</h2>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="generateCard()" data-i18n="card.regen">🔄 Regenerate</button>
+      </div>
+      <div class="card-display-wrap">
+        <div id="health-card">
+          <div class="card-topbar">
+            <div class="card-brand">Health<span>Pass</span></div>
+            <div class="card-id" id="cardId">HP-XXXX-XXXX</div>
+          </div>
+          <div class="card-worker">
+            <div class="card-avatar" id="cardAvatar">?</div>
+            <div class="card-worker-info">
+              <div class="card-name" id="cardName">—</div>
+              <div class="card-meta-row">
+                <span id="cardAge">—</span>
+                <span id="cardGender">—</span>
+                <span id="cardOccupation">—</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-chips" id="cardChips"></div>
+          <div class="card-bottom">
+            <div class="card-em-info">
+              <div class="card-em-label">Emergency Contact</div>
+              <div class="card-em-name" id="cardEmName">—</div>
+              <div class="card-em-num" id="cardEmPhone">—</div>
+            </div>
+            <div class="card-qr-box" id="qrcode">
+              <div class="qr-loading">QR</div>
+            </div>
+          </div>
+          <div class="card-strip">
+            <div class="card-strip-left">🚨 <span data-i18n="card.strip">EMERGENCY HEALTH RECORD — SCAN QR</span></div>
+            <span id="cardDate"></span>
+          </div>
+        </div>
+
+        <div class="card-actions-panel">
+          <div class="card-action-group">
+            <div class="cag-title" data-i18n="actions.title">Quick Info</div>
+            <div class="info-row"><span class="info-label" data-i18n="info.blood">Blood Group</span><span class="info-val" id="infoBlood">—</span></div>
+            <div class="info-row"><span class="info-label" data-i18n="info.mobile">Mobile</span><span class="info-val" id="infoMobile">—</span></div>
+            <div class="info-row"><span class="info-label" data-i18n="info.em">Emergency</span><span class="info-val" id="infoEm">—</span></div>
+          </div>
+          <div class="card-action-group">
+            <div class="cag-title" data-i18n="actions.download">Download & Share</div>
+            <div class="cag-btns">
+              <button class="btn btn-primary btn-full" onclick="downloadCard()" data-i18n="btn.download">⬇️ Download as Image</button>
+              <button class="btn btn-outline btn-full" onclick="printCard()" data-i18n="btn.print">🖨️ Print Card</button>
+              <button class="btn btn-outline btn-full" onclick="shareURL()" data-i18n="btn.share">🔗 Copy Share Link</button>
+            </div>
+            <div class="share-url-box hidden" id="shareUrlBox" onclick="copyURL()">Click to copy URL</div>
+          </div>
+          <div class="card-action-group">
+            <div class="cag-title" data-i18n="actions.scanner">Test Your Card</div>
+            <div class="cag-btns">
+              <button class="btn btn-danger btn-full" onclick="showPage('scanner')" data-i18n="btn.scan-test">📷 Open Emergency Scanner</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="page-scanner" class="page hidden">
+  <div class="scanner-hero">
+    <div class="scanner-hero-tag">🚨 Emergency Tool</div>
+    <h1 class="scanner-hero-h" data-i18n="scan.h">Emergency QR Scanner</h1>
+    <p class="scanner-hero-p" data-i18n="scan.p">Scan a HealthPass QR code to instantly access the patient's critical medical information.</p>
+  </div>
+
+  <div class="scanner-main">
+    <div class="scanner-layout">
+      <div class="scanner-box">
+        <div class="scanner-box-header">
+          <div>
+            <div class="scanner-box-title" data-i18n="scan.box-title">Camera Scanner</div>
+            <div class="scanner-box-sub" data-i18n="scan.box-sub">Point at a HealthPass QR code</div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="startScanBtn" onclick="startScanner()" data-i18n="scan.start">Start Camera</button>
+        </div>
+        <div class="scanner-body">
+          <div class="scanner-area">
+            <div class="scanner-placeholder" id="scannerPlaceholder">
+              <div class="scanner-placeholder-icon">📷</div>
+              <div class="scanner-placeholder-text" data-i18n="scan.placeholder-title">Camera not started</div>
+              <div class="scanner-placeholder-sub" data-i18n="scan.placeholder-sub">Click "Start Camera" to begin scanning</div>
+            </div>
+            <div id="reader" style="width:100%;height:100%;display:none"></div>
+          </div>
+          <div class="scanner-status" id="scannerStatus">
+            <span class="status-dot"></span>
+            <span id="scannerStatusText" data-i18n="scan.status-idle">Waiting to start</span>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm btn-full" onclick="stopScanner()" id="stopScanBtn" style="display:none" data-i18n="scan.stop">⏹ Stop Camera</button>
+            <button class="btn btn-outline btn-sm btn-full" onclick="clearScanResults()" id="clearResultsBtn" style="display:none" data-i18n="scan.clear">🔄 Scan Another</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="scanner-box">
+        <div class="scanner-box-header">
+          <div>
+            <div class="scanner-box-title" data-i18n="scan.info-title">How it Works</div>
+            <div class="scanner-box-sub" data-i18n="scan.info-sub">For emergency responders</div>
+          </div>
+          <span style="font-size:24px">ℹ️</span>
+        </div>
+        <div class="scanner-body">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;gap:14px;align-items:flex-start">
+              <div style="width:36px;height:36px;border-radius:10px;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">1️⃣</div>
+              <div><div style="font-weight:700;font-size:13px;color:var(--h);margin-bottom:2px" data-i18n="how.step1-title">Allow Camera Access</div><div style="font-size:12px;color:var(--muted)" data-i18n="how.step1-desc">Grant camera permission when prompted by the browser.</div></div>
+            </div>
+            <div style="display:flex;gap:14px;align-items:flex-start">
+              <div style="width:36px;height:36px;border-radius:10px;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">2️⃣</div>
+              <div><div style="font-weight:700;font-size:13px;color:var(--h);margin-bottom:2px" data-i18n="how.step2-title">Point at QR Code</div><div style="font-size:12px;color:var(--muted)" data-i18n="how.step2-desc">Hold the patient's HealthPass card in front of the camera.</div></div>
+            </div>
+            <div style="display:flex;gap:14px;align-items:flex-start">
+              <div style="width:36px;height:36px;border-radius:10px;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">3️⃣</div>
+              <div><div style="font-weight:700;font-size:13px;color:var(--h);margin-bottom:2px" data-i18n="how.step3-title">Instant Results</div><div style="font-size:12px;color:var(--muted)" data-i18n="how.step3-desc">Critical medical info appears immediately below.</div></div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div style="background:var(--surf2);border-radius:var(--r-sm);padding:14px;font-size:12px;color:var(--muted)">
+            <strong style="color:var(--h)" data-i18n="how.note-title">🔒 Privacy Note:</strong>
+            <span data-i18n="how.note-desc"> All data is decoded locally. Nothing is uploaded or stored by the scanner.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-full" id="scanResults">
+      <div class="em-section" id="emSection">
+        <div class="em-title">🚨 <span data-i18n="results.em-title">Emergency Information</span></div>
+        <div class="em-grid" id="emGrid"></div>
+      </div>
+      <div class="full-record-card">
+        <div class="frc-header">
+          <div class="frc-avatar" id="frcAvatar">?</div>
+          <div style="flex:1">
+            <div class="frc-name" id="frcName">—</div>
+            <div class="frc-meta" id="frcMeta">—</div>
+            <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap" id="frcBadges"></div>
+          </div>
+        </div>
+        <div class="frc-body">
+          <div class="frc-section">
+            <div class="frc-section-title" data-i18n="results.personal">Personal Details</div>
+            <div class="frc-rows" id="frcPersonal"></div>
+          </div>
+          <div class="frc-section">
+            <div class="frc-section-title" data-i18n="results.vaccinations">Vaccination Status</div>
+            <div class="frc-rows" id="frcVaccinations"></div>
+          </div>
+          <div class="frc-section">
+            <div class="frc-section-title" data-i18n="results.contact">Emergency Contact</div>
+            <div class="frc-rows" id="frcContact"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
